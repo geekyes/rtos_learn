@@ -1,0 +1,14 @@
+
+build/*
+
+!build/refresh_mk_common.py
+!build/makefile
+!build/stm32_flash.ld
+
+docs
+
+/**/.*
+
+!.gitignore
+
+
