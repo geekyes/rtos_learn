@@ -12,10 +12,29 @@
 #
 #================================================================
 
-import os
-import sys
+import os, sys
 
-def get_src_files_header_paths(curr_path):
+def get_filter_src(regular_str, lib_conf_path):
+    import re
+
+    filter_src = ['core_cm3.c']
+    regular_obj = re.compile(regular_str)
+
+    lib_conf = open(lib_conf_path, 'r')
+    line_str = lib_conf.readline()
+    while (line_str):
+        result = regular_obj.findall(line_str)
+        if (result != []):
+            result = result[0].split('"')[-2].split('.')[-2] + '.c'
+            filter_src.append(result)
+        line_str = lib_conf.readline()
+    lib_conf.close()
+
+    #  print('filter_src: \n' + '\n'.join(filter_src))
+
+    return filter_src
+
+def get_src_files_header_paths(curr_path, filter_src):
     folder_list = []
     header_file_dir_list = []
     src_file_dir_list = []
@@ -43,7 +62,7 @@ def get_src_files_header_paths(curr_path):
                 tmp_folder.append(sub_folder + '/' + elem)
             elif (os.path.isfile(sub_folder + '/' + elem)):
                 if ('c' == elem.split('.')[-1]): #  说明是源文件
-                    if ('core_cm3.c' != elem):
+                    if (not elem in filter_src):
                         src_file_list.append(sub_folder + '/' + elem)
                         dot_c_exist_flag = 'dot_c'
                 elif ('h' == elem.split('.')[-1]): #  说明这个目录是头文件目录
@@ -104,7 +123,11 @@ if ('__main__' == __name__):
 
     #  获取工程的源文件和头文件目录
     src_files, src_file_dirs, header_paths, startup_file_dir, ld_file = \
-            get_src_files_header_paths(project_path)
+            get_src_files_header_paths(
+                    project_path,
+                    get_filter_src(
+                        r'^// #include ".*"',
+                        '../src/bsp/stm32_lib_3_5/stm32f10x_conf.h'))
 
     #  处理 dot_c 文件
     dependence_d = ''
@@ -163,9 +186,10 @@ if ('__main__' == __name__):
     mk_common_file.write('\n')
     mk_common_file.write('vpath %.c $(SRC_PATH)\n')
     mk_common_file.write('\n')
-    compile_args = ' -c -g -mcpu=cortex-m3 -mthumb '
+    compile_args = ' -c -g -Wall -mcpu=cortex-m3 -mthumb '
+    compile_args += ' -Os -ffunction-sections -fdata-sections '
     compile_args += defines
-    link_args = ' -mcpu=cortex-m3 -mthumb --specs=nosys.specs'
+    link_args = ' -mcpu=cortex-m3 -mthumb --specs=nosys.specs -Wl,--gc-sections'
     mk_common_file.write('LD_FILE := ' + ld_file + '\n')
     mk_common_file.write('CFLAGS := ' + compile_args + '\n')
     mk_common_file.write('LFLAGS := ' + link_args + '\n')
