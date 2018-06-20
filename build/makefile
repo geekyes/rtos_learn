@@ -20,17 +20,20 @@ else
 $(error please execute 'python3 refresh_mk_common.py' genterate 'makefile.common')
 endif
 
-$(BIN_PATH)/$(TARGET).bin : $(BIN_PATH)/$(TARGET)
+$(BIN_PATH)/$(TARGET)_bin : $(BIN_PATH)/$(TARGET)
 	$(OBJCOPY) -O binary -S $< $@
 
 $(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) $(OBJ_PATH)/startup.o
 	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@
 	arm-none-eabi-size $@
 
-test : $(BIN_PATH)/$(TARGET).bin
+test : $(BIN_PATH)/$(TARGET)_bin
 	@echo "--> done <--"
 
-.PHONY : test clean
+load_bin : $(BIN_PATH)/$(TARGET)_bin
+	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg 
+
+.PHONY : test clean load_bin
 
 clean : 
-	rm -rf $(TARGET) dep_tmp gen_obj_cmd makefile.common
+	rm -rf $(TARGET) makefile.common
