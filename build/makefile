@@ -20,21 +20,15 @@ else
 $(error please execute 'python3 refresh_mk_common.py' genterate 'makefile.common')
 endif
 
-ifeq (dep_tmp, $(wildcard dep_tmp))
-else
-$(error please execute 'python3 refresh_mk_common.py' genterate 'dep_tmp')
-endif
+$(BIN_PATH)/$(TARGET).bin : $(BIN_PATH)/$(TARGET)
+	$(OBJCOPY) -O binary -S $< $@
 
-ifeq (gen_obj_cmd, $(wildcard gen_obj_cmd))
-else
-$(error please execute 'python3 refresh_mk_common.py' genterate 'gen_obj_cmd')
-endif
-
-$(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o)
+$(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) $(OBJ_PATH)/startup.o
 	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@
+	arm-none-eabi-size $@
 
-test : $(BIN_PATH)/$(TARGET)
-	@echo "why????"
+test : $(BIN_PATH)/$(TARGET).bin
+	@echo "--> done <--"
 
 .PHONY : test clean
 

@@ -1,9 +1,7 @@
 
 build/*
 
-!build/refresh_mk_common.py
-!build/makefile
-!build/stm32_flash.ld
+!build/*.py
 
 docs/*
 !docs/*.md

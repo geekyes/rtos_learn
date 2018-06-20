@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #! -*- coding: utf-8 -*-
 
 
@@ -14,9 +13,11 @@
 
 import os, sys
 
+#  获取不需要的库模块
 def get_filter_src(regular_str, lib_conf_path):
     import re
 
+    #  TODO 手动增加不需要的 dot c
     filter_src = ['core_cm3.c']
     regular_obj = re.compile(regular_str)
 
@@ -30,6 +31,7 @@ def get_filter_src(regular_str, lib_conf_path):
         line_str = lib_conf.readline()
     lib_conf.close()
 
+    #  调试信息
     #  print('filter_src: \n' + '\n'.join(filter_src))
 
     return filter_src
@@ -68,7 +70,7 @@ def get_src_files_header_paths(curr_path, filter_src):
                 elif ('h' == elem.split('.')[-1]): #  说明这个目录是头文件目录
                     dot_h_exist_flag = 'dot_h'
                 elif ('s' == elem.split('.')[-1]):
-                    #  选择不同 IDE 的启动文件
+                    #  TODO 选择不同 IDE 的启动文件
                     if ('TrueSTUDIO' == sub_folder.split('/')[-1]):
                         startup_file_exist_flag = True
                 elif (False == ld_file_exist_flag
@@ -101,10 +103,6 @@ def get_src_files_header_paths(curr_path, filter_src):
     return src_file_list, src_file_dir_list,\
             header_file_dir_list, startup_file_dir, ld_file
 
-def execute_cmd(cmd):
-    if(os.system(cmd)):
-        sys.exit('os.system(' + cmd + ') exec failed!!!')
-
 if ('__main__' == __name__):
 
     #  编译工具变量定义
@@ -136,14 +134,9 @@ if ('__main__' == __name__):
         base_name = base_name.split('.')[:-1]
         dependence_d += '$(OBJ_PATH)/' + ''.join(base_name) + '.d ' 
     #  将原文件目录转换成字符串
-    src_path = ''
-    for elem in src_file_dirs:
-        src_path += elem + ' '
-
+    src_path = ' ' + ' '.join(src_file_dirs) + ' '
     #  将头文件目录转换成 gcc 的参数
-    head_file_args = ''
-    for elem in header_paths:
-        head_file_args += '-I"' + elem + '"' + suffix
+    head_file_args = ' -I' + ' -I'.join(header_paths) + ' '
 
     #  根据 target 获取相应的启动文件
     startup_file = ''
@@ -163,15 +156,8 @@ if ('__main__' == __name__):
 
     #  makefile.common 的路径
     mk_common_path = script_path + '/' + 'makefile.common'
-    #  dep_tmp 的路径
-    dep_tmp_path = script_path + '/' + 'dep_tmp'
-    #  gen_obj_cmd 的路径
-    gen_obj_cmd_path = script_path + '/' + 'gen_obj_cmd'
-    if (os.path.isdir(mk_common_path) or os.path.isdir(dep_tmp_path)
-            or os.path.isdir(gen_obj_cmd_path)):
+    if (os.path.isdir(mk_common_path)):
         os.remove(mk_common_path)
-        os.remove(dep_tmp_path)
-        os.remove(gen_obj_cmd_path)
     mk_common_file = open(mk_common_path, 'w')
     mk_common_file.write('\n')
     mk_common_file.write('TARGET := ' + target + '\n')
@@ -201,25 +187,14 @@ if ('__main__' == __name__):
     mk_common_file.write('include $(DEPENDENCE_D)' + '\n')
     mk_common_file.write('\n')
     mk_common_file.write('$(OBJ_PATH)/%.d : %.c\n')
-    mk_common_file.write(
-            '\t$(CC) -MM -E $(CFLAGS) $(HEAD_FILE_ARGS) $< > $@.tmp\n')
-    mk_common_file.write('\t@cat dep_tmp > $@\n')
-    mk_common_file.write('\t@cat $@.tmp >> $@\n')
-    mk_common_file.write('\t@rm -f $@.tmp\n')
-    mk_common_file.write('\t@cat gen_obj_cmd >> $@\n')
+    mk_common_file.write('\t@python3 refresh_dot_d.py $< $@\n')
+    mk_common_file.write('\t@echo refresh $@\n')
     mk_common_file.write('\n')
     #  生成 startup 的 obj
     mk_common_file.write(
-            'startup.o : ' + startup_file + '.s\n')
+            '$(OBJ_PATH)/startup.o : ' + startup_file + '.s\n')
     mk_common_file.write(
-            '\t$(CC) $(HEAD_FILE_ARGS) $(CFLAGS) $< -o $(OBJ_PATH)/$@\n')
-    mk_common_file.write('\n')
-    dep_tmp_file = open(dep_tmp_path, 'w')
-    dep_tmp_file.write('$(OBJ_PATH)/')
-    dep_tmp_file.close()
-    gen_obj_cmd_file = open(gen_obj_cmd_path, 'w')
-    gen_obj_cmd_file.write(
             '\t$(CC) $(HEAD_FILE_ARGS) $(CFLAGS) $< -o $@\n')
-    gen_obj_cmd_file.close()
+    mk_common_file.write('\n')
     mk_common_file.close()
 
