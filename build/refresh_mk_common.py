@@ -118,14 +118,14 @@ if ('__main__' == __name__):
     #  工程的路径变量定义
     script_path = '.'
     project_path = '../'
+    lib_conf_path = '../src/bsp/stm32f10x/drivers/stm32f10x_conf.h'
 
     #  获取工程的源文件和头文件目录
     src_files, src_file_dirs, header_paths, startup_file_dir, ld_file = \
             get_src_files_header_paths(
                     project_path,
                     get_filter_src(
-                        r'^// #include ".*"',
-                        '../src/bsp/stm32_lib_3_5/stm32f10x_conf.h'))
+                        r'^// #include ".*"', lib_conf_path))
 
     #  处理 dot_c 文件
     dependence_d = ''

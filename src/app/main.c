@@ -8,11 +8,13 @@
 *
 ================================================================*/
 
-#include "stm32f10x_conf.h"
+#include "public.h"
 
 int main(void)
 {
     /* init */
+    (void)usart_driver.init();
+    (void)usart_driver.write((uint8_t*)"test", 4);
 
     while(1)
     {
