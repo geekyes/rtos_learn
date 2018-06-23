@@ -13,8 +13,8 @@
 int main(void)
 {
     /* init */
-    (void)usart_driver.init();
-    (void)usart_driver.write((uint8_t*)"test", 4);
+    (void)usart_driver.init(NULL, 115200);
+    (void)usart_driver.write((uint8_t*)"chenjiang\n", 10);
 
     while(1)
     {
@@ -23,3 +23,4 @@ int main(void)
 
     return 0;
 }
+

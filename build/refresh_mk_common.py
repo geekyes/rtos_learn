@@ -71,7 +71,7 @@ def get_src_files_header_paths(curr_path, filter_src):
                     dot_h_exist_flag = 'dot_h'
                 elif ('s' == elem.split('.')[-1]):
                     #  TODO 选择不同 IDE 的启动文件
-                    if ('TrueSTUDIO' == sub_folder.split('/')[-1]):
+                    if ('gcc_ride7' == sub_folder.split('/')[-1]):
                         startup_file_exist_flag = True
                 elif (False == ld_file_exist_flag
                         and 'ld' == elem.split('.')[-1]):
@@ -107,7 +107,7 @@ if ('__main__' == __name__):
 
     #  编译工具变量定义
     #  TODO 没有实现输入单片机型号直接判断对应的启动文件
-    target = 'stm32f10x_hd'
+    target = 'stm32f10x_md'
     prefix = 'arm-none-eabi-'
     suffix = ' '
     gcc = prefix + 'gcc' + suffix
@@ -141,9 +141,9 @@ if ('__main__' == __name__):
     #  根据 target 获取相应的启动文件
     startup_file = ''
     defines = ' -DUSE_STDPERIPH_DRIVER '
-    if ('stm32f10x_hd' == target):
+    if ('stm32f10x_md' == target):
         startup_file = ''.join(startup_file_dir) + '/startup_' + target;
-        defines += ' -DSTM32F10X_HD '
+        defines += ' -DSTM32F10X_MD '
 
     #  创建目录结构
     target_path = script_path + '/' + target

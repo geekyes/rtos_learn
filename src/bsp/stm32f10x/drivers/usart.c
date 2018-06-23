@@ -10,11 +10,15 @@
 
 #include "public.h"
 
-#undef NULL
-#define NULL ((void*)0)
+struct rcv_buff {
+    uint8_t data[RCV_BUFF_SIZE];
+    usart_rcv_handler_t handler;
+};
+
+static struct rcv_buff rcv;
 
 /* init */
-static uint8_t init(void)
+static uint8_t init(usart_rcv_handler_t handler, uint32_t baud_rate)
 {
     /* GPIO端口设置 */
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -40,7 +44,7 @@ static uint8_t init(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
     /* USART 初始化设置 */
-	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_BaudRate = baud_rate;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
 	USART_InitStructure.USART_Parity = USART_Parity_No;
@@ -49,6 +53,15 @@ static uint8_t init(void)
     USART_Init(USART1, &USART_InitStructure);
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
     USART_Cmd(USART1, ENABLE);
+
+    if (NULL != handler)
+    {
+        rcv.handler = handler;
+    }
+    else
+    {
+        /* 不处理 */
+    }
 
     return 0;
 }
@@ -64,35 +77,22 @@ static uint8_t write(uint8_t *p_data, uint8_t size)
     for (uint8_t i = 0; i < size; i++)
     {
         USART_SendData(USART1, p_data[i]);
+        while (RESET == USART_GetFlagStatus(USART1, USART_FLAG_TXE)) ;
     }
 
     return 0;
 }
-
-/* read */
-static uint8_t read(uint8_t *p_data, uint8_t size)
-{
-    if (size == 0 || NULL == p_data)
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
 
 void USART1_IRQHandler(void)
 {
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
-        /* (USART1->DR) 读取接收到的数据 */
-        uint8_t Res = (uint8_t)USART_ReceiveData(USART1);
+        (void)USART_ReceiveData(USART1);
     }
-} 
+}
 
 const struct mcu_driver usart_driver = {
     init,
-    write,
-    read
+    write
 };
 

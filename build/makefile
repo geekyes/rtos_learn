@@ -31,9 +31,16 @@ test : $(BIN_PATH)/$(TARGET)_bin
 	@echo "--> done <--"
 
 load_bin : $(BIN_PATH)/$(TARGET)_bin
-	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg 
+	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg \
+		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
 
-.PHONY : test clean load_bin
+gdb : $(BIN_PATH)/$(TARGET)
+	&& arm-none-eabi-gdb $< -ex "target remote localhost:3333" -ex "load"
+
+openocd : $(BIN_PATH)/$(TARGET)
+	start openocd -f interface/jlink.cfg -f target/stm32f1x.cfg
+
+.PHONY : test clean load_bin openocd gdb
 
 clean : 
 	rm -rf $(TARGET) makefile.common
