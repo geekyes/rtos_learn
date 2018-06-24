@@ -12,6 +12,7 @@
 #define PUBLIC_H__
 
 #include <stdint.h>
+#include <string.h>
 
 #include "stm32f10x_conf.h"
 

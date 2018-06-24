@@ -7,7 +7,7 @@
 #   filename   : refresh_mk_common.py
 #   author     : chenjiang
 #   date       : 2018-06-09
-#   description: 请食用 python refresh_mk_common.py target 构建 
+#   description: 请食用 python refresh_mk_common.py md|hd 构建 
 #
 #================================================================
 
@@ -42,7 +42,6 @@ def get_src_files_header_paths(curr_path, filter_src):
     src_file_dir_list = []
     src_file_list = []
     startup_file_dir = []
-    ld_file = ''
 
     #  获取 curr_path 的目录
     for elem in os.listdir(curr_path):
@@ -54,7 +53,6 @@ def get_src_files_header_paths(curr_path, filter_src):
         dot_h_exist_flag = 'dot_none'
         dot_c_exist_flag = 'dot_none'
         startup_file_exist_flag = False
-        ld_file_exist_flag = False
         
         #  一个目录里面有两种东西，一是子目录，二是文件
         #  TODO 应该需要添加目录遍临深度的控制
@@ -73,10 +71,6 @@ def get_src_files_header_paths(curr_path, filter_src):
                     #  TODO 选择不同 IDE 的启动文件
                     if ('gcc_ride7' == sub_folder.split('/')[-1]):
                         startup_file_exist_flag = True
-                elif (False == ld_file_exist_flag
-                        and 'ld' == elem.split('.')[-1]):
-                    ld_file_exist_flag = True
-                    ld_file = sub_folder + '/' + elem
         
         #  避免头文件目录重复添加
         if ('dot_h' == dot_h_exist_flag):
@@ -98,16 +92,16 @@ def get_src_files_header_paths(curr_path, filter_src):
     #  print('src file dir list: \n' + '\n'.join(src_file_dir_list))
     #  print('header file dir list: \n' + '\n'.join(header_file_dir_list))
     #  print('startup file dir list: \n' + '\n'.join(startup_file_dir))
-    #  print('ld file : ' + ld_file + '\n')
 
     return src_file_list, src_file_dir_list,\
-            header_file_dir_list, startup_file_dir, ld_file
+            header_file_dir_list, startup_file_dir
 
 if ('__main__' == __name__):
 
     #  编译工具变量定义
-    #  TODO 没有实现输入单片机型号直接判断对应的启动文件
-    target = 'stm32f10x_md'
+    if (len(sys.argv) != 2):
+        sys.exit('python3 ' + sys.argv[0] + ' md|hd')
+    target = 'stm32f10x_' + sys.argv[1]
     prefix = 'arm-none-eabi-'
     suffix = ' '
     gcc = prefix + 'gcc' + suffix
@@ -119,9 +113,10 @@ if ('__main__' == __name__):
     script_path = '.'
     project_path = '../'
     lib_conf_path = '../src/bsp/stm32f10x/drivers/stm32f10x_conf.h'
+    ld_file = '../src/bsp/stm32f10x/stm32_flash_' + sys.argv[1] + '.ld'
 
     #  获取工程的源文件和头文件目录
-    src_files, src_file_dirs, header_paths, startup_file_dir, ld_file = \
+    src_files, src_file_dirs, header_paths, startup_file_dir = \
             get_src_files_header_paths(
                     project_path,
                     get_filter_src(
@@ -144,6 +139,11 @@ if ('__main__' == __name__):
     if ('stm32f10x_md' == target):
         startup_file = ''.join(startup_file_dir) + '/startup_' + target;
         defines += ' -DSTM32F10X_MD '
+    elif ('stm32f10x_hd' == target):
+        startup_file = ''.join(startup_file_dir) + '/startup_' + target;
+        defines += ' -DSTM32F10X_HD '
+    else:
+        sys.exit('python3 ' + sys.argv[0] + ' md|hd')
 
     #  创建目录结构
     target_path = script_path + '/' + target

@@ -11,11 +11,12 @@
 #include "public.h"
 
 struct rcv_buff {
+    uint8_t index;
     uint8_t data[RCV_BUFF_SIZE];
     usart_rcv_handler_t handler;
 };
 
-static struct rcv_buff rcv;
+static struct rcv_buff rcv = {0};
 
 /* init */
 static uint8_t init(usart_rcv_handler_t handler, uint32_t baud_rate)
@@ -57,6 +58,7 @@ static uint8_t init(usart_rcv_handler_t handler, uint32_t baud_rate)
     if (NULL != handler)
     {
         rcv.handler = handler;
+        rcv.index = 0;
     }
     else
     {
@@ -85,9 +87,25 @@ static uint8_t write(uint8_t *p_data, uint8_t size)
 
 void USART1_IRQHandler(void)
 {
-    if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
-        (void)USART_ReceiveData(USART1);
+        static uint8_t finish_flag = 0;
+        rcv.data[rcv.index] = (uint8_t)USART_ReceiveData(USART1);
+        
+        /* 判断接收结束第一步 */
+        if ((uint8_t)'\r' == rcv.data[rcv.index])
+        {
+            finish_flag++;
+        }
+        rcv.index++;
+        
+        /* 判断接收结束第二步 */
+        if (finish_flag == 1 || rcv.index > RCV_BUFF_SIZE)
+        {
+            finish_flag = 0;
+            rcv.handler(rcv.data, rcv.index - 1);
+            rcv.index = 0;
+        }
     }
 }
 
