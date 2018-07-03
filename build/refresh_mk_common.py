@@ -37,6 +37,8 @@ def get_filter_src(regular_str, lib_conf_path):
     return filter_src
 
 def get_src_files_header_paths(curr_path, filter_src):
+    #  TODO 不需要的目录
+    dir_filter = []
     folder_list = []
     header_file_dir_list = []
     src_file_dir_list = []
@@ -45,7 +47,7 @@ def get_src_files_header_paths(curr_path, filter_src):
 
     #  获取 curr_path 的目录
     for elem in os.listdir(curr_path):
-        if (os.path.isdir(curr_path + elem)):
+        if (os.path.isdir(curr_path + elem) and not elem in dir_filter):
             folder_list.append(curr_path + elem)
 
     for sub_folder in folder_list:
@@ -59,7 +61,8 @@ def get_src_files_header_paths(curr_path, filter_src):
         for elem in os.listdir(sub_folder):
             #  说明这个目录下还有子目录，添加到临时遍临列表中去
             if (os.path.isdir(sub_folder + '/' + elem)):
-                tmp_folder.append(sub_folder + '/' + elem)
+                if (not elem in dir_filter):
+                    tmp_folder.append(sub_folder + '/' + elem)
             elif (os.path.isfile(sub_folder + '/' + elem)):
                 if ('c' == elem.split('.')[-1]): #  说明是源文件
                     if (not elem in filter_src):

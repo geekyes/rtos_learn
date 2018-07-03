@@ -7,7 +7,7 @@
 #   filename   : makefile
 #   author     : chenjiang
 #   date       : 2018-06-09
-#   description: TODO
+#   description: makefile
 #
 #================================================================
 
@@ -39,7 +39,7 @@ load_bin_openjtag : $(BIN_PATH)/$(TARGET)_bin
 		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
 
 gdb : $(BIN_PATH)/$(TARGET)
-	arm-none-eabi-gdb $< -ex "target remote localhost:3333" -ex "load"
+	@echo "arm-none-eabi-gdb $< -ex \"target remote localhost:3333\" -ex \"load\""
 
 jlink : $(BIN_PATH)/$(TARGET)
 	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg
@@ -51,3 +51,4 @@ openjtag : $(BIN_PATH)/$(TARGET)
 
 clean : 
 	rm -rf $(TARGET) makefile.common
+
