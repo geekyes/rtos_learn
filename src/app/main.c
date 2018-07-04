@@ -18,7 +18,7 @@ typedef void (*task_t)(void);
 
 struct task_runtime_data {
     uint8_t number;
-    uint32_t sp;
+    uint32_t *sp;
     uint32_t stack[TASK_STACK_SIZE];
 };
 
@@ -37,6 +37,9 @@ static void task_start(void);
 static void task_switch(struct task_runtime_data *p_curr_task,\
         struct task_runtime_data *p_next_task);
 
+extern void asm_task_start(void);
+extern void asm_task_switch(void);
+
 static struct {
     volatile uint8_t size;
     uint8_t data[RCV_BUFF_SIZE];
@@ -45,6 +48,8 @@ static struct {
 struct task_runtime_data root_task = {0};
 struct task_runtime_data task1 = {0};
 struct task_runtime_data task2 = {0};
+uint32_t **p_curr_sp = NULL;
+uint32_t *next_sp = NULL;
 
 int main(void)
 {
@@ -56,11 +61,6 @@ int main(void)
     
     task_start();
     
-    while (1)
-    {
-        /* space */
-    }
-
     return 0;
 }
 
@@ -82,9 +82,11 @@ static void usart_rcv_task(void)
     {
         if (rcv.size)
         {
-            (void)usart_driver.write((uint8_t*)"\r\nrcv result: \r\n", 16);
+            (void)usart_driver.write((uint8_t*)"rcv result: \r\n", 16);
             (void)usart_driver.write(rcv.data, rcv.size);
+            (void)usart_driver.write((uint8_t*)"\r\n", 2);
             rcv.size = 0;
+            task_switch(&root_task, &task1);
         }
     }
 }
@@ -95,7 +97,7 @@ static void task_one(void)
     {
         usart_driver.write((uint8_t*)"task1 run...\r\n", 14);
         /* delay */
-        delay(100);
+        delay(1000);
         /* task switch */
         task_switch(&task1, &task2);
     }
@@ -107,9 +109,9 @@ static void task_two(void)
     {
         usart_driver.write((uint8_t*)"task2 run...\r\n", 14);
         /* delay */
-        delay(100);
+        delay(1000);
         /* task switch */
-        task_switch(&task2, &task1);
+        task_switch(&task2, &root_task);
     }
 }
 
@@ -139,53 +141,35 @@ static void task_create(uint8_t num, task_t task,\
     p_task->stack[TASK_STACK_SIZE - ++i] = 0; /* r1 */
     p_task->stack[TASK_STACK_SIZE - ++i] = 0; /* r0 */
     p_task->stack[TASK_STACK_SIZE - ++i] = MODE_USR; /* cpsr */
-    p_task->sp = (uint32_t)&p_task->stack[TASK_STACK_SIZE - i]; /* r13 */
+    p_task->sp = &p_task->stack[TASK_STACK_SIZE - i]; /* r13 */
 }
 
 static void task_start(void)
 {
     /* push 操作行为：先减少后操作 */
     /* pop 操作行为：先操作后增加 */
-    asm volatile (
-            /* 获取 task 的 sp */
-            "mov r13, %0\n\t"
-            /* xpsr 还原 */
-            "pop {r0}\n\t"
-            "msr xpsr, r0\n\t"
-            /* 还原 r0 - r12 */
-            "pop {r0 - r12, r15}"
-            :: "r" (task1.sp)
-            );
+    p_curr_sp = &task1.sp;
+    asm_task_start();
 }
 
 static void task_switch(struct task_runtime_data *p_curr_task,\
         struct task_runtime_data *p_next_task)
 {
-    asm volatile (
-            /* 保存 curr task 的环境到当前任务栈 */
-            "push {r0 - r12, r14}\n\t"
-            /* 保存 curr task xpsr */
-            "mrs r0, xpsr\n\t"
-            "push {r0}\n\t"
-            /* 保存 curr task sp */
-            "str r13, %0\n\t"
-            /* 获取 next task sp */
-            "mov r13, %1\n\t"
-            /* 还原 next task xpsr */
-            "pop {r0}\n\t"
-            "msr xpsr, r0\n\t"
-            /* 还原 r0 - r12 */
-            "pop {r0 - r12, r15}"
-            : "=m" (p_curr_task->sp)
-            : "r" (p_next_task->sp)
-            );
+    if (NULL == p_curr_task || NULL == p_next_task)
+    {
+        return ;
+    }
+
+    p_curr_sp = &p_curr_task->sp;
+    next_sp = p_next_task->sp;
+    asm_task_switch();
 }
 
 static void delay(uint32_t cnt)
 {
     for (volatile uint32_t i = 0; i < cnt; i++)
     {
-        for (volatile uint32_t j = 0; j < 720; j++)
+        for (volatile uint32_t j = 0; j < 7200; j++)
         {
             ;
         }

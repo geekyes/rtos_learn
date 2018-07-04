@@ -23,9 +23,13 @@ endif
 $(BIN_PATH)/$(TARGET)_bin : $(BIN_PATH)/$(TARGET)
 	$(OBJCOPY) -O binary -S $< $@
 
-$(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) $(OBJ_PATH)/startup.o
+$(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) \
+	$(OBJ_PATH)/startup.o $(OBJ_PATH)/switch.o
 	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@
 	arm-none-eabi-size $@
+
+$(OBJ_PATH)/switch.o : ../src/app/switch.s
+	$(CC) $(CFLAGS) $< -o $@
 
 test : $(BIN_PATH)/$(TARGET)_bin
 	@echo "--> done <--"
@@ -39,7 +43,7 @@ load_bin_openjtag : $(BIN_PATH)/$(TARGET)_bin
 		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
 
 gdb : $(BIN_PATH)/$(TARGET)
-	@echo "arm-none-eabi-gdb $< -ex \"target remote localhost:3333\" -ex \"load\""
+	arm-none-eabi-gdb $< -ex "target remote localhost:3333" -ex "load"
 
 jlink : $(BIN_PATH)/$(TARGET)
 	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg
