@@ -4,7 +4,7 @@
 *   filename   : debug.c
 *   author     : chenjiang
 *   date       : 2018-07-24
-*   description: µ÷ÊÔÏà¹Ø
+*   description: è°ƒè¯•ç›¸å…³
 *
 ================================================================*/
 
