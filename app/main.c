@@ -8,7 +8,9 @@
 *
 ================================================================*/
 
-#include "public.h"
+#include <stdint.h>
+
+#include "uart.h"
 
 #define TASK_STACK_SIZE ((uint8_t)200 / 4)
 /* THUMB指令集USR工作模式掩码 */
@@ -54,7 +56,8 @@ uint32_t *next_sp = NULL;
 int main(void)
 {
     /* init */
-    (void)usart_driver.init(usart_rcv, 115200);
+    struct uart_cfg cfg = {UART_1, 115200, usart_rcv};
+    uart_init(&cfg);
     task_create(0, usart_rcv_task, &root_task);
     task_create(1, task_one, &task1);
     task_create(2, task_two, &task2);
@@ -82,9 +85,9 @@ static void usart_rcv_task(void)
     {
         if (rcv.size)
         {
-            (void)usart_driver.write((uint8_t*)"rcv result: \r\n", 16);
-            (void)usart_driver.write(rcv.data, rcv.size);
-            (void)usart_driver.write((uint8_t*)"\r\n", 2);
+            uart_write(UART_1, (uint8_t*)"rcv result: \r\n", 16);
+            uart_write(UART_1, rcv.data, rcv.size);
+            uart_write(UART_1, (uint8_t*)"\r\n", 2);
             rcv.size = 0;
             task_switch(&root_task, &task1);
         }
@@ -95,7 +98,7 @@ static void task_one(void)
 {
     while (1)
     {
-        usart_driver.write((uint8_t*)"task1 run...\r\n", 14);
+        uart_write(UART_1, (uint8_t*)"task1 run...\r\n", 14);
         /* delay */
         delay(1000);
         /* task switch */
@@ -107,7 +110,7 @@ static void task_two(void)
 {
     while (1)
     {
-        usart_driver.write((uint8_t*)"task2 run...\r\n", 14);
+        uart_write(UART_1, (uint8_t*)"task2 run...\r\n", 14);
         /* delay */
         delay(1000);
         /* task switch */

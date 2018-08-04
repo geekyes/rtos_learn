@@ -115,8 +115,8 @@ if ('__main__' == __name__):
     #  工程的路径变量定义
     script_path = '.'
     project_path = '../'
-    lib_conf_path = '../src/bsp/stm32f10x/drivers/stm32f10x_conf.h'
-    ld_file = '../src/bsp/stm32f10x/stm32_flash_' + sys.argv[1] + '.ld'
+    lib_conf_path = '../bsp/stm32f10x/drivers/stm32f10x_conf.h'
+    ld_file = '../bsp/stm32f10x/stm32_flash_' + sys.argv[1] + '.ld'
 
     #  获取工程的源文件和头文件目录
     src_files, src_file_dirs, header_paths, startup_file_dir = \

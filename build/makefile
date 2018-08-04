@@ -29,7 +29,7 @@ $(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) \
 	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@
 	arm-none-eabi-size $@
 
-$(OBJ_PATH)/switch.o : ../src/app/switch.s
+$(OBJ_PATH)/switch.o : ../app/switch.s
 	$(CC) $(CFLAGS) $< -o $@
 
 test : $(BIN_PATH)/$(TARGET)_bin
