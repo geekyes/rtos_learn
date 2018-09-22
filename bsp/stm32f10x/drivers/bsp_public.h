@@ -18,6 +18,13 @@
 #include "stm32f10x_conf.h"
 #include "debug.h"
 
+#ifdef STM32F10X_HD
+#define STM32F10X_PIN_NUMBERS (64)
+#endif
+#ifdef STM32F10X_MD
+#define STM32F10X_PIN_NUMBERS (48)
+#endif
+
 #endif /* PUBLIC_H__ */
 
 

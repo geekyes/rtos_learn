@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include "uart.h"
+#include "can.h"
 
 #define TASK_STACK_SIZE ((uint8_t)200 / 4)
 /* THUMB指令集USR工作模式掩码 */
@@ -58,6 +59,7 @@ int main(void)
     /* init */
     struct uart_cfg cfg = {UART_1, 115200, usart_rcv};
     uart_init(&cfg);
+    can_init();
     task_create(0, usart_rcv_task, &root_task);
     task_create(1, task_one, &task1);
     task_create(2, task_two, &task2);
@@ -70,11 +72,8 @@ int main(void)
 /* usart_rcv handler */
 static void usart_rcv(uint8_t *p_data, uint8_t size)
 {
-    if (size == 0 || NULL == p_data)
-    {
-        return ;
-    }
-
+    DEBUG_ASSERT(size > 0 && p_data);
+    
     memcpy(rcv.data, p_data, size);
     rcv.size = size;
 }
@@ -98,11 +97,26 @@ static void task_one(void)
 {
     while (1)
     {
-        uart_write(UART_1, (uint8_t*)"task1 run...\r\n", 14);
+        uart_write(UART_1, (uint8_t*)"can send run...\r\n", 17);
+        CanTxMsg tx_msg = {
+            #ifdef STM32F10X_HD
+            .StdId = 0x100,
+            .Data ={0x31, 0x63, 0x68, 0x65, 0x6e, 0x6a, 0xd, 0xa},
+            #endif
+            #ifdef STM32F10X_MD
+            .StdId = 0x101,
+            .Data ={0x32, 0x63, 0x68, 0x65, 0x6e, 0x6a, 0xd, 0xa},
+            #endif
+            .ExtId = 0x0,
+            .IDE = CAN_Id_Standard,
+            .RTR = CAN_RTR_Data,
+            .DLC = 8,
+        };
+        (void)CAN_Transmit(CAN1, &tx_msg);
         /* delay */
         delay(1000);
         /* task switch */
-        task_switch(&task1, &task2);
+        /* task_switch(&task1, &task2); */
     }
 }
 
@@ -121,10 +135,7 @@ static void task_two(void)
 static void task_create(uint8_t num, task_t task,\
         struct task_runtime_data *p_task)
 {
-    if (NULL == p_task)
-    {
-        return ;
-    }
+    DEBUG_ASSERT(p_task);
 
     uint8_t i = 0;
 
@@ -158,10 +169,7 @@ static void task_start(void)
 static void task_switch(struct task_runtime_data *p_curr_task,\
         struct task_runtime_data *p_next_task)
 {
-    if (NULL == p_curr_task || NULL == p_next_task)
-    {
-        return ;
-    }
+    DEBUG_ASSERT(p_curr_task && p_next_task);
 
     p_curr_sp = &p_curr_task->sp;
     next_sp = p_next_task->sp;

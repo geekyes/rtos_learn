@@ -79,6 +79,12 @@ void uart_init(struct uart_cfg *cfg)
     USART_Init(inst.name, &USART_InitStructure);
     if (NULL != cfg->rcv_indicate) // 中断接收
     {
+        NVIC_InitTypeDef NVIC_InitStructure;
+        NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+        NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+        NVIC_Init(&NVIC_InitStructure);
         USART_ITConfig(inst.name, USART_IT_RXNE, ENABLE);
         rcv_buff[cfg->idx].indicate = cfg->rcv_indicate;
         rcv_buff[cfg->idx].index = 0;
@@ -93,7 +99,7 @@ void uart_init(struct uart_cfg *cfg)
 /* write */
 void uart_write(enum uart_idx idx, uint8_t *p_data, uint8_t size)
 {
-    DEBUG_ASSERT(size == 0 || NULL == p_data);
+    DEBUG_ASSERT(size > 0 && p_data);
 
     struct uart_instance inst = uart_inst_map[idx];
 

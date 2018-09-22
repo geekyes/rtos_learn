@@ -26,7 +26,7 @@ $(BIN_PATH)/$(TARGET)_bin : $(BIN_PATH)/$(TARGET)
 
 $(BIN_PATH)/$(TARGET) : $(DEPENDENCE_D:.d=.o) \
 	$(OBJ_PATH)/startup.o $(OBJ_PATH)/switch.o
-	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@
+	$(CC) $(LFLAGS) $^ -T$(LD_FILE) -o $@ -Wl,-Map,$@.map
 	arm-none-eabi-size $@
 
 $(OBJ_PATH)/switch.o : ../app/switch.s
@@ -35,6 +35,9 @@ $(OBJ_PATH)/switch.o : ../app/switch.s
 test : $(BIN_PATH)/$(TARGET)_bin
 	@echo "--> done <--"
 
+
+# 使用 swd 模式，需要在 jlink.cfg 添加下面的内容
+# transport select swd
 load_bin_jlink : $(BIN_PATH)/$(TARGET)_bin
 	openocd -f interface/jlink.cfg -f target/stm32f1x.cfg \
 		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
@@ -43,7 +46,7 @@ load_bin_openjtag : $(BIN_PATH)/$(TARGET)_bin
 	openocd -f interface/ftdi/100ask-openjtag.cfg -f target/stm32f1x.cfg \
 		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
 
-load_bin_stlink : $(BIN_PATH)/$(TARGET)
+load_bin_stlink : $(BIN_PATH)/$(TARGET)_bin
 	openocd -f interface/stlink-v2.cfg -f target/stm32f1x.cfg \
 		-c"init; reset halt; flash write_image erase $< 0x08000000; reset; exit"
 
@@ -63,5 +66,5 @@ stlink : $(BIN_PATH)/$(TARGET)
 	openjtag stlink gdb
 
 clean : 
-	rm -rf $(TARGET) makefile.common
+	rm -rf $(OBJ_PATH)/* $(BIN_PATH)/$(TARGET)* 
 

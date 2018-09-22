@@ -13,13 +13,12 @@
 
 #include "bsp_public.h"
 
-#define STM32F10X_PIN_NUMBERS 48
-
 enum out_level {BIT_LOW = 0x0, BIT_HIGH};
 
 struct pin_cfg {
     uint8_t idx;
-    enum {AIN = 0x0, INPUT = 0x1, OUTPUT = 0x5, AF_OUT = 0x7} mode;
+    enum {AIN = 0x0, INPUT = 0x1, INPUT_UP = 0x3, OUTPUT = 0x5, \
+        AF_OUT = 0x7} mode;
 };
 
 // init
